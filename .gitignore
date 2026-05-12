@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# PocketBase
+backend/pb_data/
+
+# SQLite temp files
+*.db-shm
+*.db-wal

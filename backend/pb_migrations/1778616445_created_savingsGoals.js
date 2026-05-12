@@ -20,19 +20,18 @@ migrate((app) => {
         "type": "text"
       },
       {
-        "autogeneratePattern": "",
+        "cascadeDelete": false,
+        "collectionId": "_pb_users_auth_",
         "help": "",
         "hidden": false,
-        "id": "text1689669068",
-        "max": 0,
-        "min": 0,
+        "id": "relation1689669068",
+        "maxSelect": 0,
+        "minSelect": 0,
         "name": "userId",
-        "pattern": "",
         "presentable": false,
-        "primaryKey": false,
         "required": true,
         "system": false,
-        "type": "text"
+        "type": "relation"
       },
       {
         "autogeneratePattern": "",
@@ -71,7 +70,7 @@ migrate((app) => {
         "name": "currentAmount",
         "onlyInt": false,
         "presentable": false,
-        "required": false,
+        "required": true,
         "system": false,
         "type": "number"
       },
@@ -82,7 +81,7 @@ migrate((app) => {
         "max": "",
         "min": "",
         "name": "deadline",
-        "presentable": false,
+        "presentable": true,
         "required": false,
         "system": false,
         "type": "date"
@@ -108,7 +107,7 @@ migrate((app) => {
         "id": "bool989355118",
         "name": "completed",
         "presentable": false,
-        "required": false,
+        "required": true,
         "system": false,
         "type": "bool"
       },

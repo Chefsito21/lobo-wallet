@@ -1,8 +1,8 @@
 /// <reference path="../pb_data/types.d.ts" />
 migrate((app) => {
   const collection = new Collection({
-    "createRule": "@request.auth.id = userId",
-    "deleteRule": "@request.auth.id = userId",
+    "createRule": null,
+    "deleteRule": null,
     "fields": [
       {
         "autogeneratePattern": "[a-z0-9]{15}",
@@ -20,33 +20,32 @@ migrate((app) => {
         "type": "text"
       },
       {
-        "autogeneratePattern": "",
+        "cascadeDelete": false,
+        "collectionId": "_pb_users_auth_",
         "help": "",
         "hidden": false,
-        "id": "text1689669068",
-        "max": 0,
-        "min": 0,
+        "id": "relation1689669068",
+        "maxSelect": 0,
+        "minSelect": 0,
         "name": "userId",
-        "pattern": "",
         "presentable": false,
-        "primaryKey": false,
         "required": true,
         "system": false,
-        "type": "text"
+        "type": "relation"
       },
       {
         "help": "",
         "hidden": false,
         "id": "select2363381545",
-        "maxSelect": 1,
+        "maxSelect": 0,
         "name": "type",
         "presentable": true,
         "required": true,
         "system": false,
         "type": "select",
         "values": [
-          "Ingreso",
-          "Gasto"
+          "income",
+          "expense"
         ]
       },
       {
@@ -73,40 +72,8 @@ migrate((app) => {
         "system": false,
         "type": "select",
         "values": [
-          "Comida",
-          "Transporte",
-          "Entretenimiento",
-          "Educación",
-          "Compras",
-          "Otros"
+          "Food"
         ]
-      },
-      {
-        "help": "",
-        "hidden": false,
-        "id": "date2862495610",
-        "max": "",
-        "min": "",
-        "name": "date",
-        "presentable": false,
-        "required": true,
-        "system": false,
-        "type": "date"
-      },
-      {
-        "autogeneratePattern": "",
-        "help": "",
-        "hidden": false,
-        "id": "text18589324",
-        "max": 0,
-        "min": 0,
-        "name": "notes",
-        "pattern": "",
-        "presentable": true,
-        "primaryKey": false,
-        "required": false,
-        "system": false,
-        "type": "text"
       },
       {
         "hidden": false,
@@ -131,12 +98,12 @@ migrate((app) => {
     ],
     "id": "pbc_3174063690",
     "indexes": [],
-    "listRule": "@request.auth.id = userId",
+    "listRule": null,
     "name": "transactions",
     "system": false,
     "type": "base",
-    "updateRule": "@request.auth.id = userId",
-    "viewRule": "@request.auth.id = userId"
+    "updateRule": null,
+    "viewRule": null
   });
 
   return app.save(collection);

@@ -2,6 +2,15 @@
 migrate((app) => {
   const collection = app.findCollectionByNameOrId("pbc_3174063690")
 
+  // update collection data
+  unmarshal({
+    "createRule": "@request.auth.id = userId",
+    "deleteRule": "@request.auth.id = userId",
+    "listRule": "@request.auth.id = userId",
+    "updateRule": "@request.auth.id = userId",
+    "viewRule": "@request.auth.id = userId"
+  }, collection)
+
   // update field
   collection.fields.addAt(4, new Field({
     "help": "",
@@ -15,17 +24,27 @@ migrate((app) => {
     "type": "select",
     "values": [
       "Food",
-      "Transporte",
-      "Entretenimiento",
-      "Educación",
-      "Compras",
-      "Otros"
+      "Transportation",
+      "Entertainment",
+      "Education",
+      "Utilities",
+      "Shopping",
+      "Other"
     ]
   }))
 
   return app.save(collection)
 }, (app) => {
   const collection = app.findCollectionByNameOrId("pbc_3174063690")
+
+  // update collection data
+  unmarshal({
+    "createRule": null,
+    "deleteRule": null,
+    "listRule": null,
+    "updateRule": null,
+    "viewRule": null
+  }, collection)
 
   // update field
   collection.fields.addAt(4, new Field({
@@ -39,12 +58,7 @@ migrate((app) => {
     "system": false,
     "type": "select",
     "values": [
-      "Comida",
-      "Transporte",
-      "Entretenimiento",
-      "Educación",
-      "Compras",
-      "Otros"
+      "Food"
     ]
   }))
 

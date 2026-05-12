@@ -1,8 +1,8 @@
 /// <reference path="../pb_data/types.d.ts" />
 migrate((app) => {
   const collection = new Collection({
-    "createRule": null,
-    "deleteRule": null,
+    "createRule": "@request.auth.id = userId",
+    "deleteRule": "@request.auth.id = userId",
     "fields": [
       {
         "autogeneratePattern": "[a-z0-9]{15}",
@@ -17,6 +17,35 @@ migrate((app) => {
         "primaryKey": true,
         "required": true,
         "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "_pb_users_auth_",
+        "help": "",
+        "hidden": false,
+        "id": "relation1689669068",
+        "maxSelect": 0,
+        "minSelect": 0,
+        "name": "userId",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "autogeneratePattern": "",
+        "help": "",
+        "hidden": false,
+        "id": "text105650625",
+        "max": 0,
+        "min": 0,
+        "name": "category",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
         "type": "text"
       },
       {
@@ -42,12 +71,12 @@ migrate((app) => {
     ],
     "id": "pbc_1308224162",
     "indexes": [],
-    "listRule": null,
+    "listRule": "@request.auth.id = userId",
     "name": "budgets",
     "system": false,
     "type": "base",
-    "updateRule": null,
-    "viewRule": null
+    "updateRule": "@request.auth.id = userId",
+    "viewRule": "@request.auth.id = userId"
   });
 
   return app.save(collection);
