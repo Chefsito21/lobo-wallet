@@ -114,13 +114,21 @@ const TransactionPage = () => {
   };
 
   const handleEdit = (transaction) => {
+    // 1. Formateamos la fecha de PocketBase de "2026-05-12 10:30:00.000Z" a "YYYY-MM-DD"
+    // Usamos substring(0,10) para capturar solo los primeros 10 caracteres de manera segura.
+    const safeDate = transaction.date 
+      ? transaction.date.substring(0, 10) 
+      : new Date().toISOString().split('T')[0];
+
     setFormData({
-      type: transaction.type,
-      amount: transaction.amount.toString(),
-      category: transaction.category,
-      date: transaction.date,
+      type: transaction.type || 'expense',
+      // 2. Escudo contra null/undefined antes de convertir a string
+      amount: transaction.amount ? transaction.amount.toString() : '',
+      category: transaction.category || 'Food',
+      date: safeDate,
       notes: transaction.notes || '',
     });
+    
     setEditingId(transaction.id);
     setIsModalOpen(true);
   };
