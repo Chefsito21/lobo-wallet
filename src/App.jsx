@@ -14,6 +14,7 @@ import BudgetPage from '@/pages/BudgetPage.jsx';
 import SavingsGoalsPage from '@/pages/SavingsGoalsPage.jsx';
 import CategoriesPage from '@/pages/CategoriesPage.jsx';
 import { Toaster } from '@/components/ui/sonner';
+import SupportPage from '@/pages/SupportPage.jsx';
 
 function App() {
   return (
@@ -73,7 +74,16 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/support"
+              element={
+                <ProtectedRoute>
+                  <SupportPage />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
+          
           <Toaster />
         </AuthProvider>
       </Router>

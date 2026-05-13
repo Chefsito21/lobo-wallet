@@ -33,6 +33,7 @@ const Header = () => {
     { name: 'Resumen Mensual', path: '/monthly-summary' },
     { name: 'Presupuestos', path: '/budgets' },
     { name: 'Metas de Ahorro', path: '/savings-goals' },
+    { name: 'Soporte', path: '/support' },
   ];
 
   const links = isAuthenticated ? authenticatedLinks : publicLinks;
