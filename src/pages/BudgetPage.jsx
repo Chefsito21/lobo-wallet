@@ -12,20 +12,21 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Pencil, Trash2, Plus, AlertTriangle } from 'lucide-react';
 import Header from '@/components/Header.jsx';
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
+import { Settings } from 'lucide-react';
 
 const BudgetPage = () => {
   const { currentUser } = useAuth();
   const [budgets, setBudgets] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [categories, setCategories] = useState([]); // 🚀 Ahora es dinámico
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
-    category: 'Food',
+    category: '',
     monthlyLimit: '',
   });
   const [editingId, setEditingId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-
-  const categories = ['Food', 'Transportation', 'Entertainment', 'Education', 'Utilities', 'Shopping', 'Other'];
 
   useEffect(() => {
     fetchData();
@@ -33,33 +34,45 @@ const BudgetPage = () => {
 
   const fetchData = async () => {
     try {
-      const [budgetRecords, transactionRecords] = await Promise.all([
+      // 🚀 Traemos presupuestos (expandiendo categoría), transacciones y categorías de Gasto
+      const [budgetRecords, transactionRecords, categoryRecords] = await Promise.all([
         pb.collection('budgets').getFullList({
           filter: `userId = "${currentUser.id}"`,
+          expand: 'category', // 🚀 Clave para ver el nombre y no el ID
           $autoCancel: false,
         }),
         pb.collection('transactions').getFullList({
           filter: `userId = "${currentUser.id}"`,
           $autoCancel: false,
         }),
+        pb.collection('categories').getFullList({
+          filter: `userId = "${currentUser.id}" && type = "expense"`,
+          $autoCancel: false,
+        })
       ]);
 
       setBudgets(budgetRecords);
       setTransactions(transactionRecords);
+      setCategories(categoryRecords);
+
+      // Si hay categorías, seleccionamos la primera por defecto
+      if (categoryRecords.length > 0 && !formData.category) {
+        setFormData(prev => ({ ...prev, category: categoryRecords[0].id }));
+      }
     } catch (error) {
       console.error('Failed to fetch data:', error);
-      toast.error('Failed to load budgets');
+      toast.error('Failed to load data');
     } finally {
       setLoading(false);
     }
   };
 
-  const getCurrentMonthSpending = (category) => {
+  const getCurrentMonthSpending = (categoryId) => {
     const currentMonth = new Date().toISOString().slice(0, 7);
     return transactions
       .filter(t => 
         t.type === 'expense' && 
-        t.category === category && 
+        t.category === categoryId && // 🚀 Comparamos por ID
         t.date.startsWith(currentMonth)
       )
       .reduce((sum, t) => sum + t.amount, 0);
@@ -72,12 +85,16 @@ const BudgetPage = () => {
       toast.error('Please enter a valid budget amount');
       return;
     }
+    if (!formData.category) {
+      toast.error('Please select a category');
+      return;
+    }
 
     setSubmitting(true);
     try {
       const data = {
         userId: currentUser.id,
-        category: formData.category,
+        category: formData.category, // 🚀 Enviamos el ID real de la categoría
         monthlyLimit: parseFloat(formData.monthlyLimit),
       };
 
@@ -95,7 +112,7 @@ const BudgetPage = () => {
         toast.success('Budget created');
       }
 
-      setFormData({ category: 'Food', monthlyLimit: '' });
+      setFormData({ category: categories.length > 0 ? categories[0].id : '', monthlyLimit: '' });
       setEditingId(null);
       fetchData();
     } catch (error) {
@@ -131,9 +148,7 @@ const BudgetPage = () => {
   if (loading) {
     return (
       <>
-        <Helmet>
-          <title>Budgets - LoboWallet</title>
-        </Helmet>
+        <Helmet><title>Budgets - LoboWallet</title></Helmet>
         <Header />
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Skeleton className="h-8 w-48 mb-8" />
@@ -177,11 +192,14 @@ const BudgetPage = () => {
                       const isWarning = percentage >= 80;
                       const isOver = percentage > 100;
 
+                      // 🚀 Obtenemos el nombre expandido
+                      const categoryName = budget.expand?.category?.name || 'Categoría Desconocida';
+
                       return (
                         <div key={budget.id} className="p-4 rounded-lg border">
                           <div className="flex items-center justify-between mb-3">
                             <div>
-                              <h3 className="font-semibold text-lg">{budget.category}</h3>
+                              <h3 className="font-semibold text-lg">{categoryName}</h3>
                               <p className="text-sm text-muted-foreground">
                                 ${spent.toFixed(2)} of ${budget.monthlyLimit.toFixed(2)}
                               </p>
@@ -242,21 +260,37 @@ const BudgetPage = () => {
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Category</Label>
-                    <Select 
-                      value={formData.category} 
-                      onValueChange={(value) => setFormData({ ...formData, category: value })}
-                      disabled={!!editingId}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map(cat => (
-                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label>Categoría</Label>
+                    <div className="flex gap-2 items-center">
+                      <Select 
+                        value={formData.category} 
+                        onValueChange={(value) => setFormData({ ...formData, category: value })}
+                        disabled={!!editingId}
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map(cat => (
+                            <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {/* Botón + cuadrado a la derecha */}
+                      <Link to="/categories">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="icon" 
+                          className="shrink-0" 
+                          disabled={!!editingId}
+                          title="Añadir categoría"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -284,7 +318,7 @@ const BudgetPage = () => {
                         variant="outline"
                         onClick={() => {
                           setEditingId(null);
-                          setFormData({ category: 'Food', monthlyLimit: '' });
+                          setFormData({ category: categories.length > 0 ? categories[0].id : '', monthlyLimit: '' });
                         }}
                       >
                         Cancel

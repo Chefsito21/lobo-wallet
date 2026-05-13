@@ -12,6 +12,7 @@ import TransactionPage from '@/pages/TransactionPage.jsx';
 import MonthlySummaryPage from '@/pages/MonthlySummaryPage.jsx';
 import BudgetPage from '@/pages/BudgetPage.jsx';
 import SavingsGoalsPage from '@/pages/SavingsGoalsPage.jsx';
+import CategoriesPage from '@/pages/CategoriesPage.jsx';
 import { Toaster } from '@/components/ui/sonner';
 
 function App() {
@@ -61,6 +62,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <SavingsGoalsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/categories"
+              element={
+                <ProtectedRoute>
+                  <CategoriesPage />
                 </ProtectedRoute>
               }
             />
