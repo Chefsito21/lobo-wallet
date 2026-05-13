@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import Header from '@/components/Header.jsx';
 import { motion } from 'framer-motion';
+import { FLAT_ICONS } from '@/lib/iconData.js';
+import { Tag } from 'lucide-react'; // Útil como icono por defecto (fallback)
 
 const categoryIcons = {
   Food: Utensils,
@@ -41,6 +43,7 @@ const DashboardPage = () => {
           filter: `userId = "${currentUser.id}"`,
           sort: '-date,-created',
           $autoCancel: false,
+          expand: 'category',
         });
 
         setTransactions(records);
@@ -212,38 +215,38 @@ const DashboardPage = () => {
                 ) : (
                   <div className="space-y-4">
                     {recentTransactions.map((transaction) => {
-                      const CatIcon = categoryIcons[transaction.category] || categoryIcons.Other;
-                      const isIncome = transaction.type === 'income';
+                      // 1. Extraemos la información de la categoría desde el 'expand'
+                      const categoryData = transaction.expand?.category;
+                      const catName = categoryData?.name || 'Desconocida';
+                      const catColor = categoryData?.color || '#888888'; // Color gris por defecto
                       
+                      // 2. Buscamos el ícono en tu diccionario dinámico
+                      const CatIcon = FLAT_ICONS[categoryData?.icon] || Tag;
+                      
+                      const isIncome = transaction.type === 'income';
+
                       return (
-                        <div key={transaction.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50 transition-colors">
+                        <div key={transaction.id} className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
                           <div className="flex items-center gap-4">
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${
-                              isIncome ? 'bg-[#10B981]/10 text-[#10B981]' : 'bg-muted text-muted-foreground'
-                            }`}>
-                              <CatIcon className="w-6 h-6" />
+                            {/* 3. Dibujamos el círculo con el color e ícono exacto que el usuario configuró */}
+                            <div className="p-3 rounded-full bg-background border" style={{ borderColor: catColor }}>
+                              <CatIcon className="w-5 h-5" style={{ color: catColor }} />
                             </div>
                             <div>
-                              <p className="font-bold text-foreground text-base">{transaction.category}</p>
-                              <p className="text-sm text-muted-foreground font-medium">
-                                {new Date(transaction.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                              </p>
+                              <p className="font-semibold text-foreground">{catName}</p>
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <span>{new Date(transaction.date).toLocaleDateString()}</span>
+                                {/* Si quieres mostrar notas, descomenta la siguiente línea */}
+                                {/* {transaction.notes && <span>• {transaction.notes}</span>} */}
+                              </div>
                             </div>
                           </div>
-                          <div className={`text-lg font-bold ${isIncome ? 'text-[#10B981]' : 'text-[#EF4444]'}`} style={{ fontVariantNumeric: 'tabular-nums' }}>
+                          <div className={`font-bold text-lg ${isIncome ? 'text-emerald-500' : 'text-foreground'}`}>
                             {isIncome ? '+' : '-'}${transaction.amount.toFixed(2)}
                           </div>
                         </div>
                       );
                     })}
-                    <div className="pt-4 mt-2 border-t">
-                      <Button variant="ghost" className="w-full text-muted-foreground hover:text-primary" asChild>
-                        <Link to="/transactions">
-                          View all transactions
-                          <ArrowRight className="w-4 h-4 ml-2" />
-                        </Link>
-                      </Button>
-                    </div>
                   </div>
                 )}
               </CardContent>
