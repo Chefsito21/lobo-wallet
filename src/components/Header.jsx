@@ -29,10 +29,10 @@ const Header = () => {
 
   const authenticatedLinks = [
     { name: 'Dashboard', path: '/dashboard' },
-    { name: 'Transactions', path: '/transactions' },
-    { name: 'Monthly Summary', path: '/monthly-summary' },
-    { name: 'Budgets', path: '/budgets' },
-    { name: 'Savings Goals', path: '/savings-goals' },
+    { name: 'Transacciones', path: '/transactions' },
+    { name: 'Resumen Mensual', path: '/monthly-summary' },
+    { name: 'Presupuestos', path: '/budgets' },
+    { name: 'Metas de Ahorro', path: '/savings-goals' },
   ];
 
   const links = isAuthenticated ? authenticatedLinks : publicLinks;
