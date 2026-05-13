@@ -144,7 +144,7 @@ const DashboardPage = () => {
               Bienvenido de nuevo, <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">{currentUser?.name}</span>
             </h1>
             <p className="text-zinc-400 text-lg">
-              Aquí tienes el estado actual de tu imperio financiero.
+              Aquí tienes tu estado financiero actual.
             </p>
           </div>
 
