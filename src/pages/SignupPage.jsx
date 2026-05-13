@@ -8,105 +8,57 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-
-import { Wallet } from 'lucide-react';
+import { Wallet, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 import Header from '@/components/Header.jsx';
 
 const SignupPage = () => {
-
   const { signup } = useAuth();
-
   const navigate = useNavigate();
 
   const [name, setName] = useState('');
-
   const [email, setEmail] = useState('');
-
   const [password, setPassword] = useState('');
-
   const [passwordConfirm, setPasswordConfirm] = useState('');
-
   const [error, setError] = useState('');
-
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
-
     e.preventDefault();
-
     setError('');
 
-    if (
-      !name ||
-      !email ||
-      !password ||
-      !passwordConfirm
-    ) {
-
-      setError(
-        'Por favor completa todos los campos'
-      );
-
+    if (!name || !email || !password || !passwordConfirm) {
+      setError('Por favor completa todos los campos');
       return;
     }
 
     if (password.length < 8) {
-
-      setError(
-        'La contraseña debe tener al menos 8 caracteres'
-      );
-
+      setError('La contraseña debe tener al menos 8 caracteres');
       return;
     }
 
     if (password !== passwordConfirm) {
-
-      setError(
-        'Las contraseñas no coinciden'
-      );
-
+      setError('Las contraseñas no coinciden');
       return;
     }
 
     setLoading(true);
 
     try {
-
-      await signup(
-        email,
-        password,
-        passwordConfirm,
-        name
-      );
-
+      await signup(email, password, passwordConfirm, name);
       navigate('/dashboard');
-
     } catch (err) {
-
-      setError(
-        err.message || 'Error al crear la cuenta'
-      );
-
+      setError(err.message || 'Error al crear la cuenta');
     } finally {
-
       setLoading(false);
     }
   };
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-50 font-sans selection:bg-emerald-500/30">
       <Helmet>
-
         <title>Registro - LoboWallet</title>
-
         <meta
           name="description"
           content="Crea tu cuenta de LoboWallet para comenzar a administrar tus finanzas"
@@ -115,158 +67,130 @@ const SignupPage = () => {
 
       <Header />
 
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12">
+      <main className="flex-1 flex items-center justify-center px-4 py-12 relative overflow-hidden">
+        {/* Resplandor de fondo (Glow) */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md h-[500px] bg-emerald-500/10 blur-[120px] rounded-full pointer-events-none"></div>
 
-        <Card className="w-full max-w-md">
-
-          <CardHeader className="text-center">
-
-            <div className="flex justify-center mb-4">
-
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-
-                <Wallet className="w-6 h-6 text-primary" />
-
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="w-full max-w-md relative z-10"
+        >
+          <div className="bento-card p-8 sm:p-10 shadow-2xl">
+            
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-inner mb-6">
+                <Wallet className="w-8 h-8 text-emerald-400" />
               </div>
+              <h1 className="text-3xl font-extrabold tracking-tight text-zinc-100 mb-2">
+                Únete a la manada
+              </h1>
+              <p className="text-zinc-400 text-sm font-medium">
+                Crea tu cuenta y toma el control de tu futuro financiero.
+              </p>
             </div>
 
-            <CardTitle className="text-2xl">
-              Crea tu cuenta
-            </CardTitle>
-
-            <CardDescription>
-              Comienza a administrar tus finanzas hoy
-            </CardDescription>
-
-          </CardHeader>
-
-          <CardContent>
-
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-4"
-            >
-
-              <div className="space-y-2">
-
-                <Label htmlFor="name">
-                  Nombre
+            <form onSubmit={handleSubmit} className="space-y-4">
+              
+              <div className="space-y-2.5">
+                <Label htmlFor="name" className="text-zinc-300 font-bold">
+                  ¿Cómo te llamamos?
                 </Label>
-
                 <Input
                   id="name"
                   type="text"
-                  placeholder="Tu nombre"
+                  placeholder="Tu nombre o apodo"
                   value={name}
-
-                  onChange={(e) =>
-                    setName(e.target.value)
-                  }
-
-                  className="text-foreground"
+                  onChange={(e) => setName(e.target.value)}
+                  className="bg-zinc-900 border-zinc-800 rounded-xl h-12 px-4 font-medium placeholder:text-zinc-600 text-zinc-200 focus-visible:ring-emerald-500/50 transition-all"
                   required
                 />
               </div>
 
-              <div className="space-y-2">
-
-                <Label htmlFor="email">
-                  Correo electrónico
+              <div className="space-y-2.5">
+                <Label htmlFor="email" className="text-zinc-300 font-bold">
+                  Correo Electrónico
                 </Label>
-
                 <Input
                   id="email"
                   type="email"
-                  placeholder="tu@ejemplo.com"
+                  placeholder="lobo@universidad.edu"
                   value={email}
-
-                  onChange={(e) =>
-                    setEmail(e.target.value)
-                  }
-
-                  className="text-foreground"
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-zinc-900 border-zinc-800 rounded-xl h-12 px-4 font-medium placeholder:text-zinc-600 text-zinc-200 focus-visible:ring-emerald-500/50 transition-all"
                   required
                 />
               </div>
 
-              <div className="space-y-2">
-
-                <Label htmlFor="password">
+              <div className="space-y-2.5">
+                <Label htmlFor="password" className="text-zinc-300 font-bold">
                   Contraseña
                 </Label>
-
                 <Input
                   id="password"
                   type="password"
                   placeholder="Mínimo 8 caracteres"
                   value={password}
-
-                  onChange={(e) =>
-                    setPassword(e.target.value)
-                  }
-
-                  className="text-foreground"
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-zinc-900 border-zinc-800 rounded-xl h-12 px-4 font-medium placeholder:text-zinc-600 text-zinc-200 focus-visible:ring-emerald-500/50 transition-all"
                   required
                 />
               </div>
 
-              <div className="space-y-2">
-
-                <Label htmlFor="passwordConfirm">
-                  Confirmar contraseña
+              <div className="space-y-2.5">
+                <Label htmlFor="passwordConfirm" className="text-zinc-300 font-bold">
+                  Confirma tu Contraseña
                 </Label>
-
                 <Input
                   id="passwordConfirm"
                   type="password"
-                  placeholder="Vuelve a escribir tu contraseña"
+                  placeholder="Vuelve a escribirla"
                   value={passwordConfirm}
-
-                  onChange={(e) =>
-                    setPasswordConfirm(e.target.value)
-                  }
-
-                  className="text-foreground"
+                  onChange={(e) => setPasswordConfirm(e.target.value)}
+                  className="bg-zinc-900 border-zinc-800 rounded-xl h-12 px-4 font-medium placeholder:text-zinc-600 text-zinc-200 focus-visible:ring-emerald-500/50 transition-all"
                   required
                 />
               </div>
 
               {error && (
-
-                <p className="text-sm text-destructive">
-                  {error}
-                </p>
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="flex items-center gap-2 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm font-bold mt-2"
+                >
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <p>{error}</p>
+                </motion.div>
               )}
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={loading}
-              >
-
-                {loading
-                  ? 'Creando cuenta...'
-                  : 'Registrarse'}
-
-              </Button>
+              <div className="pt-4">
+                <Button
+                  type="submit"
+                  className="w-full h-12 rounded-xl font-bold bg-emerald-500 hover:bg-emerald-600 text-zinc-950 transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+                  disabled={loading}
+                >
+                  {loading ? 'Preparando credenciales...' : 'Registrarme ahora'}
+                </Button>
+              </div>
             </form>
 
-            <p className="text-center text-sm text-muted-foreground mt-4">
+            <div className="mt-8 text-center border-t border-zinc-800/50 pt-6">
+              <p className="text-sm font-medium text-zinc-400">
+                ¿Ya eres parte de la manada?{' '}
+                <Link
+                  to="/login"
+                  className="text-emerald-400 hover:text-emerald-300 font-bold transition-colors"
+                >
+                  Inicia sesión
+                </Link>
+              </p>
+            </div>
 
-              ¿Ya tienes una cuenta?{' '}
-
-              <Link
-                to="/login"
-                className="text-primary hover:underline font-medium"
-              >
-                Inicia sesión
-              </Link>
-
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    </>
+          </div>
+        </motion.div>
+      </main>
+    </div>
   );
 };
 

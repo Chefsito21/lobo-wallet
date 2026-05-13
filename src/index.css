@@ -5,111 +5,68 @@
 @tailwind utilities;
 
 @layer base {
+  /* Hacemos que el tema oscuro sea el DEFAULT desde la raíz */
   :root {
-    /* Brand Colors Light Mode */
-    --background: 0 0% 98%;
-    --foreground: 222 47% 11%;
+    /* Backgrounds: Zinc 950 y Zinc 900 */
+    --background: 240 5.9% 10%;
+    --foreground: 0 0% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card: 240 3.7% 15.9%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 240 5.9% 10%;
+    --popover-foreground: 0 0% 98%;
 
-    /* Primary: Sky Blue #0EA5E9 */
-    --primary: 199 89% 48%;
-    --primary-foreground: 0 0% 100%;
+    /* Primary: Emerald 500 (Vibrante) */
+    --primary: 142 71% 45%;
+    --primary-foreground: 240 5.9% 10%;
 
-    /* Secondary: Deep background elements */
-    --secondary: 217 32% 17%;
-    --secondary-foreground: 0 0% 100%;
+    /* Secondary: Zinc 800 */
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
 
-    /* Muted: Soft backgrounds */
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted: Textos secundarios (Zinc 400/500) */
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
 
-    /* Accent: Vibrant Highlights */
-    --accent: 199 89% 48%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent: Cyan 400 para detalles eléctricos */
+    --accent: 189 94% 43%;
+    --accent-foreground: 240 5.9% 10%;
 
-    /* Success / Income: #10B981 */
-    --success: 160 84% 39%;
-    --success-foreground: 0 0% 100%;
+    /* Success / Income: Emerald 500 */
+    --success: 142 71% 45%;
+    --success-foreground: 240 5.9% 10%;
 
-    /* Destructive / Expense: #EF4444 */
-    --destructive: 348 83% 60%;
-    --destructive-foreground: 0 0% 100%;
+    /* Destructive / Expense: Rose 500 (Un rojo más moderno) */
+    --destructive: 349 89% 60%;
+    --destructive-foreground: 0 0% 98%;
 
-    /* UI Structural Colors */
-    --border: 214.3 31.8% 91.4%;
-    --input: 0 0% 100%;
-    --input-foreground: 222 47% 11%;
-    --ring: 199 89% 48%;
+    /* UI Structural Colors (Zinc 800) */
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --input-foreground: 0 0% 98%;
+    /* Focus Ring en Emerald */
+    --ring: 142 71% 45%;
     
-    /* Default Radius */
-    --radius: 1rem;
+    /* Default Radius más suave para el estilo Bento */
+    --radius: 1.25rem;
 
-    /* Sidebar variables */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 199 89% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 40% 96.1%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 214.3 31.8% 91.4%;
-    --sidebar-ring: 199 89% 48%;
+    /* Sidebar variables adaptadas a oscuro */
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 142 71% 45%;
+    --sidebar-primary-foreground: 240 5.9% 10%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 142 71% 45%;
   }
 
-  .dark {
-    /* Brand Colors Dark Mode */
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-
-    --card: 217 32% 17%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
-
-    /* Primary: Sky Blue #0EA5E9 */
-    --primary: 199 89% 48%;
-    --primary-foreground: 0 0% 100%;
-
-    /* Secondary: Deep background elements */
-    --secondary: 217 32% 25%;
-    --secondary-foreground: 210 40% 98%;
-
-    /* Muted: Derived for elevation */
-    --muted: 217 32% 25%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    /* Accent: Vibrant Highlights */
-    --accent: 199 89% 48%;
-    --accent-foreground: 0 0% 100%;
-
-    /* Success / Income: #10B981 */
-    --success: 160 84% 39%;
-    --success-foreground: 0 0% 100%;
-
-    /* Destructive / Expense: #EF4444 */
-    --destructive: 348 83% 60%;
-    --destructive-foreground: 0 0% 100%;
-
-    /* UI Structural Colors */
-    --border: 217 32% 25%;
-    --input: 217 32% 17%;
-    --input-foreground: 210 40% 98%;
-    --ring: 199 89% 48%;
-
-    /* Sidebar variables */
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 199 89% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 32% 25%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 32% 25%;
-    --sidebar-ring: 199 89% 48%;
+  /* Si alguna vez quieres modo claro, lo dejamos como opcional */
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 240 5.9% 10%;
+    /* ... (puedes expandir el modo claro después si lo necesitas) ... */
   }
 
   * {
@@ -121,18 +78,38 @@
     color: hsl(var(--foreground));
     font-family: "DM Sans", sans-serif;
     overflow-x: clip;
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    /* Custom Scrollbar para que no rompa la estética oscura */
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  body::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  body::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  body::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 20px;
   }
 
   html {
     scroll-behavior: smooth;
+    /* Selección de texto en color Emerald translúcido */
+    ::selection {
+      background-color: hsl(var(--primary) / 0.3);
+      color: hsl(var(--foreground));
+    }
   }
 
   h1, h2, h3, h4, h5, h6 {
     text-wrap: balance;
   }
 
-  /* Base styles for global links ensuring WCAG AA contrast */
+  /* Base styles for global links */
   a:not([class]) {
     color: hsl(var(--primary));
     text-decoration-line: underline;
@@ -152,8 +129,8 @@
     background-color: hsl(var(--input));
     color: hsl(var(--input-foreground));
     border: 1px solid hsl(var(--border));
-    border-radius: var(--radius);
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border-radius: calc(var(--radius) - 0.25rem);
+    transition: background-color 0.3s ease, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
   }
 
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus-visible, 
@@ -164,15 +141,16 @@
     box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
   }
 
-  /* Smooth transition utilities for interactive components */
-  .interactive-hover {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  /* Glassmorphism utility for Bento Cards */
+  .bento-card {
+    background-color: hsl(var(--card) / 0.5);
+    backdrop-filter: blur(8px);
+    border: 1px solid hsl(var(--border) / 0.5);
+    border-radius: var(--radius);
+    transition: border-color 0.3s ease;
   }
-  .interactive-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  }
-  .interactive-hover:active {
-    transform: scale(0.98);
+
+  .bento-card:hover {
+    border-color: hsl(var(--primary) / 0.3);
   }
 }

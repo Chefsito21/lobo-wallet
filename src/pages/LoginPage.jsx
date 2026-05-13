@@ -8,15 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-
-import { Wallet } from 'lucide-react';
+import { Wallet, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 import Header from '@/components/Header.jsx';
 
@@ -29,46 +22,30 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
-
     e.preventDefault();
-
     setError('');
 
     if (!email || !password) {
-
-      setError(
-        'Por favor completa todos los campos'
-      );
-
+      setError('Por favor completa todos los campos');
       return;
     }
 
     setLoading(true);
 
     try {
-
       await login(email, password);
-
       navigate('/dashboard');
-
     } catch (err) {
-
-      setError(
-        'Correo o contraseña incorrectos'
-      );
-
+      setError('Correo o contraseña incorrectos');
     } finally {
-
       setLoading(false);
     }
   };
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-50 font-sans selection:bg-emerald-500/30">
       <Helmet>
-
         <title>Iniciar Sesión - LoboWallet</title>
-
         <meta
           name="description"
           content="Inicia sesión en tu cuenta de LoboWallet para administrar tus finanzas"
@@ -77,116 +54,105 @@ const LoginPage = () => {
 
       <Header />
 
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12">
+      <main className="flex-1 flex items-center justify-center px-4 py-12 relative overflow-hidden">
+        {/* Resplandor de fondo (Glow) */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md h-[400px] bg-emerald-500/10 blur-[120px] rounded-full pointer-events-none"></div>
 
-        <Card className="w-full max-w-md">
-
-          <CardHeader className="text-center">
-
-            <div className="flex justify-center mb-4">
-
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-
-                <Wallet className="w-6 h-6 text-primary" />
-
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="w-full max-w-md relative z-10"
+        >
+          <div className="bento-card p-8 sm:p-10 shadow-2xl">
+            
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-inner mb-6">
+                <Wallet className="w-8 h-8 text-emerald-400" />
               </div>
+              <h1 className="text-3xl font-extrabold tracking-tight text-zinc-100 mb-2">
+                Bienvenido de nuevo
+              </h1>
+              <p className="text-zinc-400 text-sm font-medium">
+                Accede a tu panel de comando financiero.
+              </p>
             </div>
 
-            <CardTitle className="text-2xl">
-              Bienvenido de nuevo
-            </CardTitle>
-
-            <CardDescription>
-              Inicia sesión en tu cuenta de LoboWallet
-            </CardDescription>
-
-          </CardHeader>
-
-          <CardContent>
-
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-4"
-            >
-
-              <div className="space-y-2">
-
-                <Label htmlFor="email">
-                  Correo electrónico
+            <form onSubmit={handleSubmit} className="space-y-5">
+              
+              <div className="space-y-2.5">
+                <Label htmlFor="email" className="text-zinc-300 font-bold">
+                  Correo Electrónico
                 </Label>
-
                 <Input
                   id="email"
                   type="email"
-                  placeholder="tu@ejemplo.com"
+                  placeholder="lobo@universidad.edu"
                   value={email}
-
-                  onChange={(e) =>
-                    setEmail(e.target.value)
-                  }
-
-                  className="text-foreground"
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-zinc-900 border-zinc-800 rounded-xl h-12 px-4 font-medium placeholder:text-zinc-600 text-zinc-200 focus-visible:ring-emerald-500/50 transition-all"
                   required
                 />
               </div>
 
-              <div className="space-y-2">
-
-                <Label htmlFor="password">
-                  Contraseña
-                </Label>
-
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-zinc-300 font-bold">
+                    Contraseña
+                  </Label>
+                  <Link to="#" className="text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors">
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+                </div>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Ingresa tu contraseña"
+                  placeholder="••••••••"
                   value={password}
-
-                  onChange={(e) =>
-                    setPassword(e.target.value)
-                  }
-
-                  className="text-foreground"
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-zinc-900 border-zinc-800 rounded-xl h-12 px-4 font-medium placeholder:text-zinc-600 text-zinc-200 focus-visible:ring-emerald-500/50 transition-all"
                   required
                 />
               </div>
 
               {error && (
-
-                <p className="text-sm text-destructive">
-                  {error}
-                </p>
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="flex items-center gap-2 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm font-bold"
+                >
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <p>{error}</p>
+                </motion.div>
               )}
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={loading}
-              >
-
-                {loading
-                  ? 'Iniciando sesión...'
-                  : 'Iniciar sesión'}
-
-              </Button>
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  className="w-full h-12 rounded-xl font-bold bg-emerald-500 hover:bg-emerald-600 text-zinc-950 transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+                  disabled={loading}
+                >
+                  {loading ? 'Verificando credenciales...' : 'Iniciar Sesión'}
+                </Button>
+              </div>
             </form>
 
-            <p className="text-center text-sm text-muted-foreground mt-4">
+            <div className="mt-8 text-center border-t border-zinc-800/50 pt-6">
+              <p className="text-sm font-medium text-zinc-400">
+                ¿Aún no eres parte de la manada?{' '}
+                <Link
+                  to="/signup"
+                  className="text-emerald-400 hover:text-emerald-300 font-bold transition-colors"
+                >
+                  Regístrate
+                </Link>
+              </p>
+            </div>
 
-              ¿No tienes una cuenta?{' '}
-
-              <Link
-                to="/signup"
-                className="text-primary hover:underline font-medium"
-              >
-                Regístrate
-              </Link>
-
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    </>
+          </div>
+        </motion.div>
+      </main>
+    </div>
   );
 };
 

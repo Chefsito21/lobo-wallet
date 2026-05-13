@@ -6,14 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Pencil, Trash2, Plus, ArrowDownCircle, ArrowUpCircle, Tag } from 'lucide-react';
+import { Pencil, Trash2, Plus, ArrowDownCircle, ArrowUpCircle, Tag, Receipt } from 'lucide-react';
 import Header from '@/components/Header.jsx';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
-import { Settings } from 'lucide-react'; // Añade Settings a tus iconos de lucide-react
+import { motion } from 'framer-motion';
 
 // Importamos nuestra data de iconos para renderizarlos en la lista
 import { FLAT_ICONS } from '@/lib/iconData.js';
@@ -21,9 +20,8 @@ import { FLAT_ICONS } from '@/lib/iconData.js';
 const TransactionPage = () => {
   const { currentUser } = useAuth();
   const [transactions, setTransactions] = useState([]);
-  const [categories, setCategories] = useState([]); // Todas las categorías del usuario
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [filterCategory, setFilterCategory] = useState('all');
@@ -31,7 +29,7 @@ const TransactionPage = () => {
   const [formData, setFormData] = useState({
     type: 'expense',
     amount: '',
-    category: '', // Ahora guardará el ID
+    category: '',
     date: new Date().toISOString().split('T')[0],
     notes: '',
   });
@@ -40,10 +38,8 @@ const TransactionPage = () => {
     fetchData();
   }, [currentUser.id]);
 
-  // Filtro reactivo: Cuando cambia el tipo (income/expense), mostramos solo esas categorías
   const availableCategories = categories.filter(c => c.type === formData.type);
 
-  // Auto-seleccionar la primera categoría disponible cuando cambias de Gasto a Ingreso y viceversa
   useEffect(() => {
     if (availableCategories.length > 0 && !editingId) {
       setFormData(prev => ({ ...prev, category: availableCategories[0].id }));
@@ -58,7 +54,7 @@ const TransactionPage = () => {
         pb.collection('transactions').getFullList({
           filter: `userId = "${currentUser.id}"`,
           sort: '-date,-created',
-          expand: 'category', // 🚀 Clave para obtener color, icono y nombre real
+          expand: 'category',
         }),
         pb.collection('categories').getFullList({
           filter: `userId = "${currentUser.id}"`,
@@ -88,7 +84,7 @@ const TransactionPage = () => {
         userId: currentUser.id,
         type: formData.type,
         amount: parseFloat(formData.amount),
-        category: formData.category, // Enviamos el ID de la categoría
+        category: formData.category,
         date: safeDate,
         notes: formData.notes,
       };
@@ -150,40 +146,61 @@ const TransactionPage = () => {
 
   if (loading) {
     return (
-      <>
+      <div className="min-h-screen bg-zinc-950 text-zinc-50">
         <Header />
-        <div className="container mx-auto px-4 py-8"><Skeleton className="h-96 w-full" /></div>
-      </>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
+          <Skeleton className="h-10 w-64 mb-8 bg-zinc-800/50 rounded-lg" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <Skeleton className="h-[500px] bg-zinc-800/50 rounded-3xl" />
+            <Skeleton className="h-[500px] lg:col-span-2 bg-zinc-800/50 rounded-3xl" />
+          </div>
+        </div>
+      </div>
     );
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-zinc-950 text-zinc-50 font-sans selection:bg-emerald-500/30">
       <Helmet><title>Transacciones - LoboWallet</title></Helmet>
       <Header />
       
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl md:text-4xl font-bold mb-8">Transacciones</h1>
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
+          <div className="mb-10">
+            <h1 className="text-3xl md:text-5xl font-extrabold mb-2 tracking-tight text-zinc-100">
+              Gestión de <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Transacciones</span>
+            </h1>
+            <p className="text-zinc-400 text-lg">Registra y administra el flujo de tu dinero.</p>
+          </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Formulario (Izquierda/Arriba) */}
-          <div>
-            <Card className="shadow-lg sticky top-20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Plus className="w-5 h-5" />
-                  {editingId ? 'Editar Transacción' : 'Nueva Transacción'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-lg">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            {/* Formulario (Izquierda/Arriba) */}
+            <div className="lg:col-span-1">
+              <div className="bento-card p-6 lg:p-8 lg:sticky lg:top-24 shadow-2xl">
+                <div className="flex items-center gap-3 mb-8 border-b border-zinc-800/50 pb-4">
+                  <div className="p-2 rounded-xl bg-zinc-800/50 text-zinc-300">
+                    <Plus className="w-5 h-5" />
+                  </div>
+                  <h2 className="text-xl font-bold text-zinc-100">
+                    {editingId ? 'Editar Movimiento' : 'Nuevo Movimiento'}
+                  </h2>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Selector de Tipo (Income/Expense) mejorado */}
+                  <div className="grid grid-cols-2 gap-2 p-1.5 bg-zinc-900/50 rounded-2xl border border-zinc-800/50">
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, type: 'expense' })}
-                      className={`py-2 px-4 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${
-                        formData.type === 'expense' ? 'bg-background shadow text-red-500' : 'text-muted-foreground hover:bg-background/50'
+                      className={`py-2.5 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                        formData.type === 'expense' 
+                          ? 'bg-zinc-800 text-rose-400 shadow-md border border-zinc-700/50' 
+                          : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/30'
                       }`}
                     >
                       <ArrowDownCircle className="w-4 h-4" /> Gasto
@@ -191,26 +208,27 @@ const TransactionPage = () => {
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, type: 'income' })}
-                      className={`py-2 px-4 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${
-                        formData.type === 'income' ? 'bg-background shadow text-emerald-500' : 'text-muted-foreground hover:bg-background/50'
+                      className={`py-2.5 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                        formData.type === 'income' 
+                          ? 'bg-zinc-800 text-emerald-400 shadow-md border border-zinc-700/50' 
+                          : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/30'
                       }`}
                     >
                       <ArrowUpCircle className="w-4 h-4" /> Ingreso
                     </button>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Categoría</Label>
+                  <div className="space-y-3">
+                    <Label className="text-zinc-300 font-bold">Categoría</Label>
                     
                     {availableCategories.length === 0 ? (
                       <div className="flex gap-2">
-                        <div className="text-sm text-destructive p-2 border border-destructive/50 rounded bg-destructive/10 flex-1">
-                          No tienes categorías de {formData.type === 'expense' ? 'gasto' : 'ingreso'}.
+                        <div className="text-sm text-rose-400 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 flex-1 flex items-center font-medium">
+                          No hay categorías de {formData.type === 'expense' ? 'gasto' : 'ingreso'}.
                         </div>
-                        {/* Botón + cuando no hay categorías */}
                         <Link to="/categories">
-                          <Button type="button" variant="outline" size="icon" className="shrink-0" title="Añadir categoría">
-                            <Plus className="w-4 h-4" />
+                          <Button type="button" variant="outline" className="w-12 h-full rounded-xl border-zinc-700 hover:bg-zinc-800 shrink-0" title="Añadir categoría">
+                            <Plus className="w-5 h-5 text-zinc-300" />
                           </Button>
                         </Link>
                       </div>
@@ -220,17 +238,17 @@ const TransactionPage = () => {
                           value={formData.category} 
                           onValueChange={(value) => setFormData({ ...formData, category: value })}
                         >
-                          <SelectTrigger className="flex-1">
+                          <SelectTrigger className="flex-1 bg-zinc-900 border-zinc-800 rounded-xl h-12">
                             <SelectValue placeholder="Selecciona..." />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-zinc-900 border-zinc-800 rounded-xl">
                             {availableCategories.map(cat => {
                               const IconComponent = FLAT_ICONS[cat.icon] || Tag;
                               return (
-                                <SelectItem key={cat.id} value={cat.id}>
-                                  <div className="flex items-center gap-2">
+                                <SelectItem key={cat.id} value={cat.id} className="hover:bg-zinc-800 focus:bg-zinc-800 rounded-lg cursor-pointer my-1">
+                                  <div className="flex items-center gap-3">
                                     <IconComponent className="w-4 h-4" style={{ color: cat.color }}/>
-                                    {cat.name}
+                                    <span className="font-medium text-zinc-200">{cat.name}</span>
                                   </div>
                                 </SelectItem>
                               );
@@ -238,141 +256,169 @@ const TransactionPage = () => {
                           </SelectContent>
                         </Select>
 
-                        {/* Botón + cuadrado a la derecha */}
                         <Link to="/categories">
-                          <Button type="button" variant="outline" size="icon" className="shrink-0" title="Añadir categoría">
-                            <Plus className="w-4 h-4" />
+                          <Button type="button" variant="outline" className="w-12 h-12 rounded-xl border-zinc-700 hover:bg-zinc-800 shrink-0" title="Añadir categoría">
+                            <Plus className="w-5 h-5 text-zinc-300" />
                           </Button>
                         </Link>
                       </div>
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="amount">Monto</Label>
-                    <Input
-                      id="amount"
-                      type="number"
-                      step="0.01" min="0.01"
-                      placeholder="0.00"
-                      value={formData.amount}
-                      onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                      required
-                    />
+                  <div className="space-y-3">
+                    <Label htmlFor="amount" className="text-zinc-300 font-bold">Monto</Label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <span className="text-zinc-500 font-bold">$</span>
+                      </div>
+                      <Input
+                        id="amount"
+                        type="number"
+                        step="0.01" min="0.01"
+                        placeholder="0.00"
+                        value={formData.amount}
+                        onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                        required
+                        className="pl-8 bg-zinc-900 border-zinc-800 rounded-xl h-12 text-lg font-semibold placeholder:text-zinc-600"
+                      />
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="date">Fecha</Label>
+                  <div className="space-y-3">
+                    <Label htmlFor="date" className="text-zinc-300 font-bold">Fecha</Label>
                     <Input
                       id="date" type="date"
                       value={formData.date}
                       onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                       required
+                      className="bg-zinc-900 border-zinc-800 rounded-xl h-12 text-zinc-200 font-medium [color-scheme:dark]"
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="notes">Notas (Opcional)</Label>
+                  <div className="space-y-3">
+                    <Label htmlFor="notes" className="text-zinc-300 font-bold">Notas <span className="text-zinc-500 font-normal">(Opcional)</span></Label>
                     <Textarea
                       id="notes" placeholder="Detalles de la transacción..."
                       value={formData.notes}
                       onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      className="resize-none" rows={2}
+                      className="resize-none bg-zinc-900 border-zinc-800 rounded-xl text-zinc-200" rows={3}
                     />
                   </div>
 
-                  <div className="flex gap-2">
-                    <Button type="submit" className="flex-1" disabled={submitting || availableCategories.length === 0}>
+                  <div className="flex gap-3 pt-2">
+                    <Button 
+                      type="submit" 
+                      className={`flex-1 font-bold h-12 rounded-xl transition-all ${editingId ? 'bg-cyan-500 hover:bg-cyan-600 text-zinc-950' : 'bg-emerald-500 hover:bg-emerald-600 text-zinc-950'}`} 
+                      disabled={submitting || availableCategories.length === 0}
+                    >
                       {submitting ? 'Guardando...' : (editingId ? 'Actualizar' : 'Registrar')}
                     </Button>
+                    
                     {editingId && (
-                      <Button type="button" variant="outline" onClick={() => {
-                        setEditingId(null);
-                        setFormData({ type: 'expense', amount: '', category: availableCategories[0]?.id || '', date: new Date().toISOString().split('T')[0], notes: '' });
-                      }}>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        className="h-12 px-6 rounded-xl border-zinc-700 hover:bg-zinc-800 text-zinc-300 font-bold"
+                        onClick={() => {
+                          setEditingId(null);
+                          setFormData({ type: 'expense', amount: '', category: availableCategories[0]?.id || '', date: new Date().toISOString().split('T')[0], notes: '' });
+                        }}
+                      >
                         Cancelar
                       </Button>
                     )}
                   </div>
                 </form>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </div>
 
-          {/* Lista de Transacciones (Derecha) */}
-          <div className="lg:col-span-2">
-            <Card className="shadow-lg">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Historial</CardTitle>
-                <Select value={filterCategory} onValueChange={setFilterCategory}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Filtrar por categoría" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas las categorías</SelectItem>
-                    {categories.map(cat => (
-                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </CardHeader>
-              <CardContent>
-                {filteredTransactions.length === 0 ? (
-                  <p className="text-center py-12 text-muted-foreground">No hay transacciones registradas.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {filteredTransactions.map((t) => {
-                      // 🚀 Extraemos los datos expandidos de la categoría
-                      const categoryData = t.expand?.category;
-                      const catName = categoryData?.name || 'Desconocida';
-                      const catColor = categoryData?.color || '#888888';
-                      const IconComponent = FLAT_ICONS[categoryData?.icon] || Tag;
-                      const isExpense = t.type === 'expense';
+            {/* Lista de Transacciones (Derecha) */}
+            <div className="lg:col-span-2">
+              <div className="bento-card p-6 lg:p-8 min-h-full">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-zinc-800/50 pb-6 mb-6">
+                  <h2 className="text-2xl font-bold text-zinc-100">Historial</h2>
+                  
+                  <Select value={filterCategory} onValueChange={setFilterCategory}>
+                    <SelectTrigger className="w-full sm:w-[220px] bg-zinc-900 border-zinc-800 rounded-xl h-11">
+                      <SelectValue placeholder="Filtrar por categoría" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-zinc-800 rounded-xl">
+                      <SelectItem value="all" className="hover:bg-zinc-800 cursor-pointer font-bold text-zinc-300">Todas las categorías</SelectItem>
+                      {categories.map(cat => (
+                        <SelectItem key={cat.id} value={cat.id} className="hover:bg-zinc-800 cursor-pointer">
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                      return (
-                        <div key={t.id} className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
-                          <div className="flex items-center gap-4">
-                            <div className="p-3 rounded-full bg-background border" style={{ borderColor: catColor }}>
-                              <IconComponent className="w-5 h-5" style={{ color: catColor }} />
-                            </div>
-                            <div>
-                              <p className="font-semibold text-foreground">{catName}</p>
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <span>{new Date(t.date).toLocaleDateString()}</span>
-                                {t.notes && (
-                                  <>
-                                    <span>•</span>
-                                    <span className="truncate max-w-[150px] sm:max-w-[300px]">{t.notes}</span>
-                                  </>
-                                )}
+                <div>
+                  {filteredTransactions.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                      <div className="w-20 h-20 rounded-full bg-zinc-800/50 flex items-center justify-center mb-6">
+                        <Receipt className="w-10 h-10 text-zinc-500" />
+                      </div>
+                      <p className="text-zinc-400 text-lg font-medium">No hay transacciones registradas.</p>
+                      <p className="text-zinc-600 mt-2 max-w-sm">Añade tu primer movimiento usando el formulario para ver tu historial aquí.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {filteredTransactions.map((t) => {
+                        const categoryData = t.expand?.category;
+                        const catName = categoryData?.name || 'Desconocida';
+                        const catColor = categoryData?.color || '#a1a1aa';
+                        const IconComponent = FLAT_ICONS[categoryData?.icon] || Tag;
+                        const isExpense = t.type === 'expense';
+
+                        return (
+                          <div key={t.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl bg-zinc-900/40 border border-zinc-800/50 hover:bg-zinc-800/40 hover:border-zinc-700/50 transition-all group gap-4 sm:gap-0">
+                            
+                            <div className="flex items-center gap-4">
+                              <div className="p-3 rounded-xl bg-zinc-950 border shadow-sm group-hover:scale-105 transition-transform" style={{ borderColor: `${catColor}40` }}>
+                                <IconComponent className="w-5 h-5" style={{ color: catColor }} />
+                              </div>
+                              <div>
+                                <p className="font-bold text-zinc-100 text-base">{catName}</p>
+                                <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-500 font-medium mt-0.5">
+                                  <span>{new Date(t.date).toLocaleDateString('es-MX', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                  {t.notes && (
+                                    <>
+                                      <span className="hidden sm:inline text-zinc-700">•</span>
+                                      <span className="truncate max-w-[200px] text-zinc-400 italic">{t.notes}</span>
+                                    </>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <span className={`font-bold text-lg ${isExpense ? 'text-foreground' : 'text-emerald-500'}`}>
-                              {isExpense ? '-' : '+'}${t.amount.toFixed(2)}
-                            </span>
-                            <div className="flex gap-1">
-                              <Button size="icon" variant="ghost" onClick={() => handleEdit(t)}>
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                              <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDelete(t.id)}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
 
-        </div>
-      </div>
-    </>
+                            <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto border-t border-zinc-800/50 sm:border-0 pt-4 sm:pt-0">
+                              <span className={`font-extrabold text-xl tracking-tight ${isExpense ? 'text-zinc-100' : 'text-emerald-400'}`}>
+                                {isExpense ? '-' : '+'}${t.amount.toFixed(2)}
+                              </span>
+                              <div className="flex gap-2">
+                                <Button size="icon" variant="ghost" className="h-10 w-10 rounded-xl hover:bg-cyan-500/10 hover:text-cyan-400 text-zinc-400 transition-colors" onClick={() => handleEdit(t)}>
+                                  <Pencil className="w-4 h-4" />
+                                </Button>
+                                <Button size="icon" variant="ghost" className="h-10 w-10 rounded-xl hover:bg-rose-500/10 hover:text-rose-400 text-zinc-400 transition-colors" onClick={() => handleDelete(t.id)}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </motion.div>
+      </main>
+    </div>
   );
 };
 
