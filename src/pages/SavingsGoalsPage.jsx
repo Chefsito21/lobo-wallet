@@ -62,20 +62,25 @@ const SavingsGoalsPage = () => {
 
     setSubmitting(true);
     try {
+      // 1. Formateamos la fecha a ISO estricto para que PocketBase la acepte
+      const safeDate = new Date(formData.deadline).toISOString();
+
       const data = {
         userId: currentUser.id,
         goalName: formData.goalName,
         targetAmount: parseFloat(formData.targetAmount),
         currentAmount: formData.currentAmount ? parseFloat(formData.currentAmount) : 0,
-        deadline: formData.deadline,
+        deadline: safeDate,
         description: formData.description,
-        completed: false,
       };
 
       if (editingId) {
+        // 2. Si editamos, NO enviamos el campo 'completed' para respetar su estado actual en la base de datos
         await pb.collection('savingsGoals').update(editingId, data, { $autoCancel: false });
         toast.success('Goal updated');
       } else {
+        // 3. Si es un objetivo nuevo, obligatoriamente nace como no completado
+        data.completed = false;
         await pb.collection('savingsGoals').create(data, { $autoCancel: false });
         toast.success('Goal created');
       }
@@ -102,7 +107,8 @@ const SavingsGoalsPage = () => {
       goalName: goal.goalName,
       targetAmount: goal.targetAmount.toString(),
       currentAmount: goal.currentAmount.toString(),
-      deadline: goal.deadline,
+      // 4. Cortamos el string de PB para que el <input type="date"> no colapse
+      deadline: goal.deadline ? goal.deadline.substring(0, 10) : '',
       description: goal.description || '',
     });
     setEditingId(goal.id);
