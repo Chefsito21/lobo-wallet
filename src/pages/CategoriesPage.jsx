@@ -68,7 +68,7 @@ const CategoriesPage = () => {
       };
 
       await pb.collection('categories').create(categoryData);
-      toast.success('Clasificación añadida a tu arsenal');
+      toast.success('Clasificación añadida');
 
       setFormData({ name: '', type: 'expense', icon: 'ShoppingBag', color: '#ef4444', plannedAmount: '' });
       fetchCategories();
@@ -129,7 +129,7 @@ const CategoriesPage = () => {
             <h1 className="text-3xl md:text-5xl font-extrabold mb-2 tracking-tight text-zinc-100">
               Sistema de <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Etiquetas</span>
             </h1>
-            <p className="text-zinc-400 text-lg">Personaliza cómo rastreas cada centavo de tu imperio.</p>
+            <p className="text-zinc-400 text-lg">Personaliza cómo rastreas cada centavo.</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import Logo from '@/components/Logo.jsx';
 
 const Header = () => {
   const { isAuthenticated, currentUser, logout } = useAuth();
@@ -43,8 +44,12 @@ const Header = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center gap-2 font-bold text-xl">
-            <Wallet className="w-6 h-6 text-primary" />
-            <span>LoboWallet</span>
+            <div className="flex items-center gap-3">
+              <Logo className="w-10 h-10 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+              <span className="text-xl font-bold tracking-tight text-zinc-100">
+                Lobo<span className="text-emerald-500">Wallet</span>
+              </span>
+            </div>          
           </Link>
 
           <nav className="hidden md:flex items-center gap-6">
