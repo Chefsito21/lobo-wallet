@@ -15,6 +15,8 @@ import SavingsGoalsPage from '@/pages/SavingsGoalsPage.jsx';
 import CategoriesPage from '@/pages/CategoriesPage.jsx';
 import { Toaster } from '@/components/ui/sonner';
 import SupportPage from '@/pages/SupportPage.jsx';
+import AccountsPage from '@/pages/AccountsPage.jsx';
+
 
 function App() {
   return (
@@ -82,8 +84,15 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/accounts"
+              element={
+                <ProtectedRoute>
+                  <AccountsPage />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
-          
           <Toaster />
         </AuthProvider>
       </Router>
