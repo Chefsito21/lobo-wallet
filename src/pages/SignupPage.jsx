@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
+import Logo from '@/components/Logo.jsx';
 
 import { useAuth } from '@/contexts/AuthContext.jsx';
 
@@ -81,7 +82,17 @@ const SignupPage = () => {
             
             <div className="text-center mb-8">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-inner mb-6">
-                <Wallet className="w-8 h-8 text-emerald-400" />
+                <Link to="/" className="inline-flex flex-col items-center justify-center group mb-6">
+                  <div className="relative flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-b from-zinc-800/50 to-zinc-900/80 border border-zinc-700/50 shadow-2xl transition-transform duration-500 group-hover:scale-105 group-hover:border-emerald-500/30">
+                    
+                    {/* Resplandor ambiental que se enciende al pasar el mouse */}
+                    <div className="absolute inset-0 bg-emerald-500/20 blur-xl rounded-full opacity-50 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    
+                    {/* El Logo a gran escala */}
+                    <Logo className="w-14 h-14 relative z-10 drop-shadow-[0_0_15px_rgba(16,185,129,0.8)]" />                    
+                  
+                  </div>
+                </Link>
               </div>
               <h1 className="text-3xl font-extrabold tracking-tight text-zinc-100 mb-2">
                 Únete a la manada
