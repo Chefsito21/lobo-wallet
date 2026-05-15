@@ -13,8 +13,7 @@ import {
   PieChart,
   Target,
   DollarSign,
-  Tag,
-  CreditCard
+  Tag
 } from 'lucide-react';
 import Header from '@/components/Header.jsx';
 import { motion } from 'framer-motion';
@@ -24,7 +23,6 @@ const DashboardPage = () => {
   const { currentUser } = useAuth();
 
   const [transactions, setTransactions] = useState([]);
-  const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [stats, setStats] = useState({
@@ -36,29 +34,20 @@ const DashboardPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Consultamos tanto las transacciones como las cuentas en paralelo
-        const [txRecords, accountsRecords] = await Promise.all([
-          pb.collection('transactions').getFullList({
-            filter: `userId = "${currentUser.id}"`,
-            sort: '-date,-created',
-            $autoCancel: false,
-            expand: 'category',
-          }),
-          pb.collection('accounts').getFullList({
-            filter: `userId = "${currentUser.id}"`,
-            sort: '-created',
-            $autoCancel: false,
-          })
-        ]);
+        const records = await pb.collection('transactions').getFullList({
+          filter: `userId = "${currentUser.id}"`,
+          sort: '-date,-created',
+          $autoCancel: false,
+          expand: 'category',
+        });
 
-        setTransactions(txRecords);
-        setAccounts(accountsRecords);
+        setTransactions(records);
 
-        const income = txRecords
+        const income = records
           .filter(t => t.type === 'income')
           .reduce((sum, t) => sum + t.amount, 0);
 
-        const expenses = txRecords
+        const expenses = records
           .filter(t => t.type === 'expense')
           .reduce((sum, t) => sum + t.amount, 0);
 
@@ -69,7 +58,7 @@ const DashboardPage = () => {
         });
 
       } catch (error) {
-        console.error('Error al obtener datos:', error);
+        console.error('Error al obtener transacciones:', error);
       } finally {
         setLoading(false);
       }
@@ -126,7 +115,6 @@ const DashboardPage = () => {
             <Skeleton className="h-48 md:col-span-1 bg-zinc-800/50 rounded-3xl" />
             <Skeleton className="h-48 md:col-span-1 bg-zinc-800/50 rounded-3xl" />
           </div>
-          <Skeleton className="h-32 w-full mb-8 bg-zinc-800/50 rounded-3xl" />
           <Skeleton className="h-96 bg-zinc-800/50 rounded-3xl" />
         </div>
       </div>
@@ -163,14 +151,15 @@ const DashboardPage = () => {
           {/* Estadísticas principales (Bento Grid) */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
 
-            {/* Tarjeta principal de balance */}
+            {/* Tarjeta principal de balance (CONSERVANDO TU DEGRADADO) */}
             <div className="md:col-span-2 relative overflow-hidden rounded-3xl interactive-hover group shadow-2xl border border-zinc-800/50">
+              {/* El degradado original que solicitaste */}
               <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-primary to-[#00B5E2] opacity-100 z-0 transition-transform duration-500 group-hover:scale-105"></div>
               
               <div className="p-8 relative z-10 flex flex-col h-full justify-between min-h-[200px]">
                 <div className="flex justify-between items-start mb-6">
                   <span className="text-white/80 font-bold text-sm tracking-widest uppercase">
-                    Balance Global
+                    Balance Actual
                   </span>
                   <div className="p-2 rounded-xl bg-white/10 backdrop-blur-md">
                     <Wallet className="w-6 h-6 text-white" />
@@ -185,13 +174,13 @@ const DashboardPage = () => {
                     ${stats.balance.toFixed(2)}
                   </h2>
                   <p className="text-white/80 font-medium">
-                    Fondos totales disponibles
+                    Fondos disponibles en total
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Ingresos */}
+            {/* Ingresos (Estilo Bento) */}
             <div className="bento-card p-8 flex flex-col h-full justify-between interactive-hover group">
               <div className="flex justify-between items-start mb-6">
                 <span className="text-zinc-400 font-bold text-sm uppercase tracking-widest group-hover:text-emerald-400 transition-colors">
@@ -209,7 +198,7 @@ const DashboardPage = () => {
               </h3>
             </div>
 
-            {/* Gastos */}
+            {/* Gastos (Estilo Bento) */}
             <div className="bento-card p-8 flex flex-col h-full justify-between interactive-hover group">
               <div className="flex justify-between items-start mb-6">
                 <span className="text-zinc-400 font-bold text-sm uppercase tracking-widest group-hover:text-rose-400 transition-colors">
@@ -227,30 +216,6 @@ const DashboardPage = () => {
               </h3>
             </div>
           </div>
-
-          {/* MIS CUENTAS (Nueva Sección) */}
-          {accounts.length > 0 && (
-            <div className="mb-8">
-              <h3 className="text-2xl font-bold px-1 text-zinc-100 mb-4">Mis Cuentas</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {accounts.map(acc => (
-                  <div key={acc.id} className="bento-card p-6 flex flex-col interactive-hover group relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500/50 group-hover:bg-emerald-400 transition-colors"></div>
-                    <div className="flex justify-between items-start mb-4 pl-2">
-                      <span className="font-bold text-zinc-300 text-lg">{acc.name}</span>
-                      <CreditCard className="w-5 h-5 text-emerald-400" />
-                    </div>
-                    <h4 className="text-3xl font-extrabold text-white pl-2">
-                      ${acc.balance.toFixed(2)}
-                    </h4>
-                    <span className="text-xs text-zinc-500 uppercase tracking-widest mt-2 font-medium pl-2">
-                      {acc.type === 'debit' ? 'Débito' : acc.type === 'credit' ? 'Crédito' : 'Efectivo'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Segunda sección del Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
@@ -315,7 +280,7 @@ const DashboardPage = () => {
                     {recentTransactions.map((transaction) => {
                       const categoryData = transaction.expand?.category;
                       const catName = categoryData?.name || 'Desconocida';
-                      const catColor = categoryData?.color || '#a1a1aa';
+                      const catColor = categoryData?.color || '#a1a1aa'; // zinc-400 default
                       const CatIcon = FLAT_ICONS[categoryData?.icon] || Tag;
                       const isIncome = transaction.type === 'income';
 
