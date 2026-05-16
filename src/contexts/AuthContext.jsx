@@ -30,17 +30,49 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signup = async (email, password, passwordConfirm, name) => {
-    const record = await pb.collection('users').create({
+  try {
+    // PASO 1: Crear el usuario en la colección 'users'
+    const userData = {
       email,
+      emailVisibility: true,
       password,
       passwordConfirm,
       name,
-    }, { $autoCancel: false });
+    };
     
-    const authData = await pb.collection('users').authWithPassword(email, password, { $autoCancel: false });
-    setCurrentUser(authData.record);
-    return authData;
-  };
+    // Creamos el usuario
+    const newUser = await pb.collection('users').create(userData);
+
+    // Inmediatamente iniciamos sesión para obtener el token y autenticar la sesión
+    await pb.collection('users').authWithPassword(email, password);
+    setCurrentUser(pb.authStore.model);
+
+    // PASO 2: Crear la Cuenta Principal por defecto
+    // Solo podemos hacer esto *después* de iniciar sesión, porque PocketBase 
+    // necesita saber que estamos autenticados para asignar el 'userId' correctamente.
+    const defaultAccountData = {
+      name: 'Billetera Principal',
+      type: 'debit',
+      balance: 0,
+      isDefault: true, // El campo de protección que añadimos antes
+      userId: newUser.id, // Enlazamos la cuenta al nuevo usuario
+    };
+
+    // Creamos el registro en la colección 'accounts'
+    await pb.collection('accounts').create(defaultAccountData);
+
+    return newUser;
+    
+  } catch (error) {
+    console.error("Error en el registro:", error);
+    
+    if (error.response && error.response.data) {
+      console.error("🔍 DETALLES DE POCKETBASE:", error.response.data);
+    }
+    
+    throw error;
+  }
+};
 
   const logout = () => {
     pb.authStore.clear();

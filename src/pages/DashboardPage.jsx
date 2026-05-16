@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { useAuth } from '@/contexts/AuthContext.jsx';
 import pb from '@/lib/pocketbaseClient';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   TrendingUp,
   TrendingDown,
@@ -23,42 +24,50 @@ const DashboardPage = () => {
   const { currentUser } = useAuth();
 
   const [transactions, setTransactions] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+  const [selectedAccount, setSelectedAccount] = useState('all');
   const [loading, setLoading] = useState(true);
-
-  const [stats, setStats] = useState({
-    totalIncome: 0,
-    totalExpenses: 0,
-    balance: 0,
-  });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // 1. MECANISMO DE AUTO-REPARACIÓN Y OBTENCIÓN DE CUENTAS
+        let userAccounts = [];
+        try {
+          userAccounts = await pb.collection('accounts').getFullList({
+            filter: `userId = "${currentUser.id}"`,
+            sort: '-created',
+            $autoCancel: false,
+          });
+          
+          if (userAccounts.length === 0) {
+            console.warn('LoboWallet Fix: El usuario no tiene cuentas. Creando cuenta predeterminada...');
+            const defaultAccount = await pb.collection('accounts').create({
+              name: 'Billetera Principal',
+              type: 'debit',
+              balance: 0,
+              isDefault: true,
+              userId: currentUser.id,
+            });
+            userAccounts.push(defaultAccount);
+          }
+          setAccounts(userAccounts);
+        } catch (accountError) {
+          console.error('Error en el control de auto-reparación de cuentas:', accountError);
+        }
+
+        // 2. OBTENER LAS TRANSACCIONES (Expandiendo categoría y cuenta)
         const records = await pb.collection('transactions').getFullList({
           filter: `userId = "${currentUser.id}"`,
           sort: '-date,-created',
           $autoCancel: false,
-          expand: 'category',
+          expand: 'category,account',
         });
 
         setTransactions(records);
 
-        const income = records
-          .filter(t => t.type === 'income')
-          .reduce((sum, t) => sum + t.amount, 0);
-
-        const expenses = records
-          .filter(t => t.type === 'expense')
-          .reduce((sum, t) => sum + t.amount, 0);
-
-        setStats({
-          totalIncome: income,
-          totalExpenses: expenses,
-          balance: income - expenses,
-        });
-
       } catch (error) {
-        console.error('Error al obtener transacciones:', error);
+        console.error('Error al obtener datos:', error);
       } finally {
         setLoading(false);
       }
@@ -67,7 +76,30 @@ const DashboardPage = () => {
     fetchData();
   }, [currentUser.id]);
 
-  const recentTransactions = transactions.slice(0, 8);
+  // 3. LÓGICA DE FILTRADO Y MATEMÁTICAS EN TIEMPO REAL
+  const filteredTransactions = useMemo(() => {
+    if (selectedAccount === 'all') return transactions;
+    return transactions.filter(t => t.account === selectedAccount);
+  }, [transactions, selectedAccount]);
+
+  const stats = useMemo(() => {
+    const income = filteredTransactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const expenses = filteredTransactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    // El balance ahora lee el saldo real de las cuentas, no solo ingresos vs gastos
+    const currentBalance = selectedAccount === 'all'
+      ? accounts.reduce((sum, acc) => sum + acc.balance, 0)
+      : accounts.find(a => a.id === selectedAccount)?.balance || 0;
+
+    return { totalIncome: income, totalExpenses: expenses, balance: currentBalance };
+  }, [filteredTransactions, accounts, selectedAccount]);
+
+  const recentTransactions = filteredTransactions.slice(0, 8);
 
   const quickActions = [
     {
@@ -125,10 +157,7 @@ const DashboardPage = () => {
     <div className="min-h-screen bg-zinc-950 text-zinc-50 font-sans selection:bg-emerald-500/30">
       <Helmet>
         <title>Panel Principal - LoboWallet</title>
-        <meta
-          name="description"
-          content="Visualiza tu resumen financiero y administra tu dinero"
-        />
+        <meta name="description" content="Visualiza tu resumen financiero y administra tu dinero" />
       </Helmet>
 
       <Header />
@@ -139,27 +168,47 @@ const DashboardPage = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
         >
-          <div className="mb-10">
-            <h1 className="text-3xl md:text-5xl font-extrabold mb-2 tracking-tight">
-              Bienvenido de nuevo, <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">{currentUser?.name}</span>
-            </h1>
-            <p className="text-zinc-400 text-lg">
-              Aquí tienes tu estado financiero actual.
-            </p>
+          {/* Cabecera y Selector de Cuentas */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
+            <div>
+              <h1 className="text-3xl md:text-5xl font-extrabold mb-2 tracking-tight">
+                Bienvenido, <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">{currentUser?.name}</span>
+              </h1>
+              <p className="text-zinc-400 text-lg">
+                Aquí tienes tu estado financiero actual.
+              </p>
+            </div>
+            
+            <div className="w-full md:w-64">
+              <Select value={selectedAccount} onValueChange={setSelectedAccount}>
+                <SelectTrigger className="w-full bg-zinc-900 border-zinc-800 rounded-xl h-12 text-zinc-100 font-bold focus:ring-emerald-500/50">
+                  <SelectValue placeholder="Selecciona una cuenta" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-zinc-800 rounded-xl">
+                  <SelectItem value="all" className="hover:bg-zinc-800 cursor-pointer text-emerald-400 font-bold">
+                    🌐 Visión Global
+                  </SelectItem>
+                  {accounts.map(acc => (
+                    <SelectItem key={acc.id} value={acc.id} className="hover:bg-zinc-800 cursor-pointer text-zinc-200">
+                      {acc.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Estadísticas principales (Bento Grid) */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
 
-            {/* Tarjeta principal de balance (CONSERVANDO TU DEGRADADO) */}
+            {/* Tarjeta principal de balance */}
             <div className="md:col-span-2 relative overflow-hidden rounded-3xl interactive-hover group shadow-2xl border border-zinc-800/50">
-              {/* El degradado original que solicitaste */}
               <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-primary to-[#00B5E2] opacity-100 z-0 transition-transform duration-500 group-hover:scale-105"></div>
               
               <div className="p-8 relative z-10 flex flex-col h-full justify-between min-h-[200px]">
                 <div className="flex justify-between items-start mb-6">
                   <span className="text-white/80 font-bold text-sm tracking-widest uppercase">
-                    Balance Actual
+                    Balance {selectedAccount === 'all' ? 'Total' : 'Disponible'}
                   </span>
                   <div className="p-2 rounded-xl bg-white/10 backdrop-blur-md">
                     <Wallet className="w-6 h-6 text-white" />
@@ -174,7 +223,7 @@ const DashboardPage = () => {
                     ${stats.balance.toFixed(2)}
                   </h2>
                   <p className="text-white/80 font-medium">
-                    Fondos disponibles en total
+                    {selectedAccount === 'all' ? 'Sumatoria de todas tus cuentas' : 'Fondos en cuenta seleccionada'}
                   </p>
                 </div>
               </div>
@@ -264,7 +313,7 @@ const DashboardPage = () => {
 
               <div className="flex-1">
                 {recentTransactions.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full py-12">
+                  <div className="flex flex-col items-center justify-center h-full py-12 text-center">
                     <div className="w-20 h-20 rounded-full bg-zinc-800/50 flex items-center justify-center mb-6">
                        <Receipt className="w-10 h-10 text-zinc-500" />
                     </div>
@@ -279,39 +328,43 @@ const DashboardPage = () => {
                   <div className="space-y-3">
                     {recentTransactions.map((transaction) => {
                       const categoryData = transaction.expand?.category;
+                      const accountData = transaction.expand?.account;
+                      
                       const catName = categoryData?.name || 'Desconocida';
-                      const catColor = categoryData?.color || '#a1a1aa'; // zinc-400 default
+                      const catColor = categoryData?.color || '#a1a1aa'; 
                       const CatIcon = FLAT_ICONS[categoryData?.icon] || Tag;
+                      
+                      const accName = accountData?.name || 'Cuenta no asignada';
                       const isIncome = transaction.type === 'income';
 
                       return (
                         <div
                           key={transaction.id}
-                          className="flex items-center justify-between p-4 rounded-2xl bg-zinc-900/40 border border-zinc-800/50 hover:bg-zinc-800/40 hover:border-zinc-700/50 transition-all group"
+                          className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl bg-zinc-900/40 border border-zinc-800/50 hover:bg-zinc-800/40 hover:border-zinc-700/50 transition-all group gap-4 sm:gap-0"
                         >
                           <div className="flex items-center gap-4">
                             <div
                               className="p-3 rounded-xl bg-zinc-950 border border-zinc-800 shadow-sm group-hover:scale-105 transition-transform"
                               style={{ borderColor: `${catColor}40` }}
                             >
-                              <CatIcon
-                                className="w-5 h-5"
-                                style={{ color: catColor }}
-                              />
+                              <CatIcon className="w-5 h-5" style={{ color: catColor }} />
                             </div>
                             <div>
                               <p className="font-bold text-zinc-100 text-base">
                                 {catName}
                               </p>
-                              <p className="text-sm text-zinc-500 font-medium">
-                                {new Date(transaction.date).toLocaleDateString('es-MX', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                {transaction.notes && ` • ${transaction.notes.substring(0, 20)}${transaction.notes.length > 20 ? '...' : ''}`}
-                              </p>
+                              <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-500 font-medium">
+                                <span>{new Date(transaction.date).toLocaleDateString('es-MX', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                <span className="hidden sm:inline text-zinc-700">•</span>
+                                <span className="text-xs bg-zinc-800/80 px-2 py-0.5 rounded-md text-zinc-400 flex items-center gap-1">
+                                  <Wallet className="w-3 h-3" /> {accName}
+                                </span>
+                              </div>
                             </div>
                           </div>
 
                           <div
-                            className={`font-extrabold text-lg tracking-tight ${
+                            className={`font-extrabold text-lg tracking-tight self-end sm:self-auto ${
                               isIncome ? 'text-emerald-400' : 'text-zinc-100'
                             }`}
                           >
