@@ -426,8 +426,8 @@ const TransactionPage = () => {
 
             {/* Lista de Transacciones (Derecha) */}
             <div className="lg:col-span-2">
-              <div className="bento-card p-6 lg:p-8 min-h-full">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-zinc-800/50 pb-6 mb-6">
+              <div className="bento-card p-6 lg:p-8 flex flex-col max-h-[calc(100vh-8rem)]">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-zinc-800/50 pb-6 mb-6 shrink-0">
                   <h2 className="text-2xl font-bold text-zinc-100">Historial</h2>
                   
                   <Select value={filterCategory} onValueChange={setFilterCategory}>
@@ -445,7 +445,11 @@ const TransactionPage = () => {
                   </Select>
                 </div>
 
-                <div>
+                {/* Contenedor con Scroll Interno */}
+                <div 
+                  className="flex-1 overflow-y-auto pr-2 pb-4"
+                  style={{ scrollbarWidth: 'thin', scrollbarColor: '#3f3f46 transparent' }}
+                >
                   {filteredTransactions.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
                       <div className="w-20 h-20 rounded-full bg-zinc-800/50 flex items-center justify-center mb-6">
@@ -471,7 +475,7 @@ const TransactionPage = () => {
                           <div key={t.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl bg-zinc-900/40 border border-zinc-800/50 hover:bg-zinc-800/40 hover:border-zinc-700/50 transition-all group gap-4 sm:gap-0">
                             
                             <div className="flex items-center gap-4">
-                              <div className="p-3 rounded-xl bg-zinc-950 border shadow-sm group-hover:scale-105 transition-transform" style={{ borderColor: `${catColor}40` }}>
+                              <div className="p-3 rounded-xl bg-zinc-950 border shadow-sm group-hover:scale-105 transition-transform shrink-0" style={{ borderColor: `${catColor}40` }}>
                                 <IconComponent className="w-5 h-5" style={{ color: catColor }} />
                               </div>
                               <div>
@@ -482,12 +486,6 @@ const TransactionPage = () => {
                                   <span className="text-xs bg-zinc-800/80 px-2 py-0.5 rounded-md text-zinc-400 flex items-center gap-1">
                                     <Wallet className="w-3 h-3" /> {accName}
                                   </span>
-                                  {t.notes && (
-                                    <>
-                                      <span className="hidden sm:inline text-zinc-700">•</span>
-                                      <span className="truncate max-w-[150px] text-zinc-400 italic">{t.notes}</span>
-                                    </>
-                                  )}
                                 </div>
                               </div>
                             </div>
@@ -496,11 +494,10 @@ const TransactionPage = () => {
                               <span className={`font-extrabold text-xl tracking-tight ${isExpense ? 'text-zinc-100' : 'text-emerald-400'}`}>
                                 {isExpense ? '-' : '+'}${t.amount.toFixed(2)}
                               </span>
-                              <div className="flex gap-2">
+                              <div className="flex gap-2 shrink-0">
                                 <Button size="icon" variant="ghost" className="h-10 w-10 rounded-xl hover:bg-cyan-500/10 hover:text-cyan-400 text-zinc-400 transition-colors" onClick={() => handleEdit(t)}>
                                   <Pencil className="w-4 h-4" />
                                 </Button>
-                                {/* NUEVO: Pasamos toda la transacción 't' a handleDelete, en lugar de solo t.id */}
                                 <Button size="icon" variant="ghost" className="h-10 w-10 rounded-xl hover:bg-rose-500/10 hover:text-rose-400 text-zinc-400 transition-colors" onClick={() => handleDelete(t)}>
                                   <Trash2 className="w-4 h-4" />
                                 </Button>

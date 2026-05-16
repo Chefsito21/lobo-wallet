@@ -248,37 +248,43 @@ const AccountsPage = () => {
           </div>
 
           {/* HISTORIAL DE TRANSFERENCIAS */}
-          <div className="bento-card p-6 lg:p-8">
-            <div className="flex items-center gap-3 border-b border-zinc-800/50 pb-6 mb-6">
+          {/* HISTORIAL DE TRANSFERENCIAS */}
+          <div className="bento-card p-6 lg:p-8 flex flex-col max-h-[400px]">
+            <div className="flex items-center gap-3 border-b border-zinc-800/50 pb-6 mb-6 shrink-0">
               <div className="p-2 rounded-xl bg-zinc-800/50 text-zinc-300"><History className="w-5 h-5" /></div>
               <h2 className="text-2xl font-bold text-zinc-100">Historial de Transferencias</h2>
             </div>
 
-            {transfers.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 text-center">
-                <ArrowRightLeft className="w-12 h-12 text-zinc-700 mb-4" />
-                <p className="text-zinc-400 font-medium">Aún no has realizado movimientos entre tus cuentas.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {transfers.map(t => (
-                  <div key={t.id} className="flex items-center justify-between p-4 rounded-2xl bg-zinc-900/40 border border-zinc-800/50 hover:bg-zinc-800/40 transition-all">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-xl bg-zinc-950 border border-cyan-500/20"><ArrowRightLeft className="w-5 h-5 text-cyan-400" /></div>
-                      <div>
-                        <div className="flex items-center gap-2 font-bold text-zinc-200">
-                          {t.expand?.fromAccount?.name || 'Cuenta borrada'} 
-                          <ArrowRight className="w-3 h-3 text-zinc-500" /> 
-                          {t.expand?.toAccount?.name || 'Cuenta borrada'}
+            <div 
+              className="flex-1 overflow-y-auto pr-2"
+              style={{ scrollbarWidth: 'thin', scrollbarColor: '#3f3f46 transparent' }}
+            >
+              {transfers.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-center">
+                  <ArrowRightLeft className="w-12 h-12 text-zinc-700 mb-4" />
+                  <p className="text-zinc-400 font-medium">Aún no has realizado movimientos entre tus cuentas.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {transfers.map(t => (
+                    <div key={t.id} className="flex items-center justify-between p-4 rounded-2xl bg-zinc-900/40 border border-zinc-800/50 hover:bg-zinc-800/40 transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 rounded-xl bg-zinc-950 border border-cyan-500/20 shrink-0"><ArrowRightLeft className="w-5 h-5 text-cyan-400" /></div>
+                        <div>
+                          <div className="flex items-center gap-2 font-bold text-zinc-200">
+                            {t.expand?.fromAccount?.name || 'Cuenta borrada'} 
+                            <ArrowRight className="w-3 h-3 text-zinc-500 shrink-0" /> 
+                            {t.expand?.toAccount?.name || 'Cuenta borrada'}
+                          </div>
+                          <p className="text-sm text-zinc-500 font-medium">{new Date(t.date).toLocaleDateString('es-MX', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' })}</p>
                         </div>
-                        <p className="text-sm text-zinc-500 font-medium">{new Date(t.date).toLocaleDateString('es-MX', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' })}</p>
                       </div>
+                      <div className="font-extrabold text-lg text-zinc-100">${t.amount.toFixed(2)}</div>
                     </div>
-                    <div className="font-extrabold text-lg text-zinc-100">${t.amount.toFixed(2)}</div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </motion.div>
       </main>
