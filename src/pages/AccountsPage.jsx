@@ -12,8 +12,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { 
   Plus, CreditCard, Wallet, Banknote, Trash2, Landmark, 
-  ArrowRightLeft, Edit, X, History, ArrowRight 
+  ArrowRightLeft, Edit, X, History, ArrowRight, PiggyBank, TrendingUp
 } from 'lucide-react';
+
+const INVESTMENT_PRESETS = {
+  nu_turbo: { name: "Cajita Turbo Nu", rate: 13 },
+  nu_garantia: { name: "Cajita Garantía Nu", rate: 6.75 },
+  uala: { name: "Ualá", rate: 15.00 },
+  mercadopago: { name: "Mercado Pago (GBM)", rate: 15.00 },
+  klar: { name: "Klar Plus", rate: 14.00 },
+  custom: { name: "Otra / Personalizada", rate: "" }
+};
 
 const AccountsPage = () => {
   const { currentUser } = useAuth();
@@ -28,14 +37,48 @@ const AccountsPage = () => {
 
   // Estados de Formularios
   const [editingAccount, setEditingAccount] = useState(null);
-  const [accountForm, setAccountForm] = useState({ name: '', type: 'debit', balance: '' });
+  // Añadimos yieldRate al estado inicial
+  const [accountForm, setAccountForm] = useState({ name: '', type: 'debit', balance: '', yieldRate: '' });
   const [transferForm, setTransferForm] = useState({ from: '', to: '', amount: '' });
 
+  // ==========================================
+  // MOTOR DE RENDIMIENTOS (INTERÉS COMPUESTO)
+  // ==========================================
+  const calculateYield = (account) => {
+    // Si no es cuenta de inversión o no tiene tasa, regresamos el saldo normal
+    if (account.type !== 'investment' || !account.yieldRate) {
+      return { total: account.balance, generated: 0 };
+    }
+
+    // Fecha de última actualización de la cuenta en PocketBase
+    const lastUpdate = new Date(account.updated);
+    const today = new Date();
+    
+    // Calculamos la diferencia en días
+    const daysDiff = Math.floor((today - lastUpdate) / (1000 * 60 * 60 * 24));
+
+    // Si no ha pasado ni un día, no hay rendimiento nuevo
+    if (daysDiff <= 0) return { total: account.balance, generated: 0 };
+
+    // Fórmula de Interés Compuesto Diario
+    const dailyRate = (account.yieldRate / 100) / 365;
+    const newTotal = account.balance * Math.pow((1 + dailyRate), daysDiff);
+    
+    const generated = newTotal - account.balance;
+
+    return { 
+      total: newTotal, 
+      generated: generated 
+    };
+  };
+
+  // Nuevo ícono para cuentas de inversión/rendimiento
   const getAccountIcon = (type) => {
     switch (type) {
       case 'debit': return <Landmark className="w-6 h-6 text-cyan-400" />;
       case 'credit': return <CreditCard className="w-6 h-6 text-purple-400" />;
       case 'cash': return <Banknote className="w-6 h-6 text-emerald-400" />;
+      case 'investment': return <PiggyBank className="w-6 h-6 text-amber-400" />;
       default: return <Wallet className="w-6 h-6 text-zinc-400" />;
     }
   };
@@ -57,9 +100,6 @@ const AccountsPage = () => {
       setTransfers(transRecords);
     } catch (error) {
       console.error('Error al obtener datos:', error);
-      if (error.response && error.response.data) {
-        console.error("🔍 DETALLES DE POCKETBASE:", error.response.data);
-    }
       toast.error('Error al sincronizar cuentas');
     } finally {
       setLoading(false);
@@ -76,10 +116,15 @@ const AccountsPage = () => {
   const handleOpenAccountModal = (account = null) => {
     if (account) {
       setEditingAccount(account);
-      setAccountForm({ name: account.name, type: account.type, balance: account.balance.toString() });
+      setAccountForm({ 
+        name: account.name, 
+        type: account.type, 
+        balance: account.balance.toString(),
+        yieldRate: account.yieldRate ? account.yieldRate.toString() : ''
+      });
     } else {
       setEditingAccount(null);
-      setAccountForm({ name: '', type: 'debit', balance: '' });
+      setAccountForm({ name: '', type: 'debit', balance: '', yieldRate: '' });
     }
     setIsAccountModalOpen(true);
   };
@@ -90,12 +135,18 @@ const AccountsPage = () => {
     
     setSubmitting(true);
     try {
+      const parsedBalance = parseFloat(accountForm.balance);
+      const parsedYield = parseFloat(accountForm.yieldRate);
+
       const data = {
         userId: currentUser.id,
         name: accountForm.name,
         type: accountForm.type,
-        balance: parseFloat(accountForm.balance),
+        balance: isNaN(parsedBalance) ? 0 : parsedBalance,
+        // Forzamos a que sea un número, si está vacío o no es inversión, manda 0
+        yieldRate: (accountForm.type === 'investment' && !isNaN(parsedYield)) ? parsedYield : 0,
       };
+      
 
       if (editingAccount) {
         await pb.collection('accounts').update(editingAccount.id, data);
@@ -144,11 +195,9 @@ const AccountsPage = () => {
 
     setSubmitting(true);
     try {
-      // 1. Actualizar saldos matemáticamente
       await pb.collection('accounts').update(sourceAcc.id, { balance: sourceAcc.balance - amount });
       await pb.collection('accounts').update(destAcc.id, { balance: destAcc.balance + amount });
 
-      // 2. Registrar el movimiento en el historial de transferencias
       await pb.collection('transfers').create({
         userId: currentUser.id,
         fromAccount: sourceAcc.id,
@@ -160,7 +209,7 @@ const AccountsPage = () => {
       toast.success('Transferencia completada con éxito');
       setIsTransferModalOpen(false);
       setTransferForm({ from: '', to: '', amount: '' });
-      fetchData(); // Refrescar UI
+      fetchData(); 
     } catch (error) {
       console.error(error);
       toast.error('Error al procesar la transferencia');
@@ -187,7 +236,7 @@ const AccountsPage = () => {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
             <div>
               <h1 className="text-3xl md:text-4xl font-extrabold mb-2 tracking-tight text-zinc-100">Mis Cuentas</h1>
-              <p className="text-zinc-400 text-lg">Administra tus tarjetas, efectivo y transferencias.</p>
+              <p className="text-zinc-400 text-lg">Administra tus tarjetas, efectivo y rendimientos.</p>
             </div>
             <div className="flex gap-3">
               <Button onClick={() => setIsTransferModalOpen(true)} variant="outline" className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 hover:text-cyan-300 font-bold rounded-xl px-4 py-6">
@@ -220,13 +269,16 @@ const AccountsPage = () => {
 
             {/* Tarjetas Reales */}
             {accounts.map((account, index) => (
-              <motion.div key={account.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: index * 0.1 }} className="p-6 rounded-3xl bg-zinc-900/40 border border-zinc-800/50 hover:bg-zinc-800/40 hover:border-zinc-700/50 transition-all group flex flex-col justify-between min-h-[160px]">
+              <motion.div key={account.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: index * 0.1 }} className={`p-6 rounded-3xl bg-zinc-900/40 border transition-all group flex flex-col justify-between min-h-[160px] ${account.type === 'investment' ? 'border-amber-500/30 hover:border-amber-500/50' : 'border-zinc-800/50 hover:border-zinc-700/50'}`}>
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800 shadow-sm">{getAccountIcon(account.type)}</div>
+                    <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800 shadow-sm">
+                      {getAccountIcon(account.type)}
+                    </div>
                     <div>
                       <span className="font-bold text-zinc-100 text-lg flex items-center gap-2">
-                        {account.name} {account.isDefault && <span className="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded-full uppercase tracking-widest">Principal</span>}
+                        {account.name} 
+                        {account.isDefault && <span className="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded-full uppercase tracking-widest">Principal</span>}
                       </span>
                     </div>
                   </div>
@@ -239,15 +291,46 @@ const AccountsPage = () => {
                     )}
                   </div>
                 </div>
+                {/* Saldo y Rendimiento */}
                 <div>
-                  <p className="text-sm text-zinc-500 font-medium uppercase tracking-wider mb-1">Disponible</p>
-                  <h3 className="text-3xl font-bold text-zinc-100 tracking-tight">${account.balance.toFixed(2)}</h3>
+                  {/* Calculamos los datos mágicos en tiempo real */}
+                  {(() => {
+                    const { total, generated } = calculateYield(account);
+                    
+                    return (
+                      <>
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-sm text-zinc-500 font-medium uppercase tracking-wider flex items-center gap-2">
+                            Disponible
+                            {account.type === 'investment' && account.yieldRate > 0 && (
+                              <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-bold shadow-[0_0_10px_rgba(245,158,11,0.2)]">
+                                +{account.yieldRate}% APY
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                        
+                        <h3 className="text-3xl font-bold text-zinc-100 tracking-tight">
+                          ${total.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </h3>
+                        
+                        {/* Se muestra SOLO si es inversión y ya generó algo de dinero */}
+                        {account.type === 'investment' && generated >= 0 && (
+                          <div className="mt-2 inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
+                            <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                            <span className="text-xs font-medium text-emerald-400">
+                              +${generated.toFixed(4)} generado
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               </motion.div>
             ))}
           </div>
 
-          {/* HISTORIAL DE TRANSFERENCIAS */}
           {/* HISTORIAL DE TRANSFERENCIAS */}
           <div className="bento-card p-6 lg:p-8 flex flex-col max-h-[400px]">
             <div className="flex items-center gap-3 border-b border-zinc-800/50 pb-6 mb-6 shrink-0">
@@ -297,35 +380,81 @@ const AccountsPage = () => {
         {/* MODAL DE CUENTA */}
         {isAccountModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm">
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 w-full max-w-md shadow-2xl relative">
-              <button onClick={() => setIsAccountModalOpen(false)} className="absolute top-4 right-4 text-zinc-500 hover:text-white"><X className="w-5 h-5"/></button>
-              <h2 className="text-2xl font-bold text-zinc-100 mb-6">{editingAccount ? 'Editar Cuenta' : 'Nueva Cuenta'}</h2>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 w-full max-w-md shadow-2xl relative overflow-hidden">
+              <button onClick={() => setIsAccountModalOpen(false)} className="absolute top-4 right-4 text-zinc-500 hover:text-white z-10"><X className="w-5 h-5"/></button>
               
-              <form onSubmit={handleSaveAccount} className="space-y-4">
+              {/* Efecto de luz dinámico según el tipo seleccionado */}
+              <div className={`absolute -top-24 -right-24 w-48 h-48 rounded-full blur-3xl opacity-20 pointer-events-none transition-colors ${accountForm.type === 'investment' ? 'bg-amber-500' : 'bg-emerald-500'}`}></div>
+              
+              <h2 className="text-2xl font-bold text-zinc-100 mb-6 relative z-10">{editingAccount ? 'Editar Cuenta' : 'Nueva Cuenta'}</h2>
+              
+              <form onSubmit={handleSaveAccount} className="space-y-4 relative z-10">
                 <div className="space-y-2">
                   <Label className="text-zinc-300">Nombre de la cuenta</Label>
-                  <Input value={accountForm.name} onChange={e => setAccountForm({...accountForm, name: e.target.value})} placeholder="Ej. BBVA Débito" required className="bg-zinc-900 border-zinc-800 rounded-xl h-12" />
+                  <Input value={accountForm.name} onChange={e => setAccountForm({...accountForm, name: e.target.value})} placeholder="Ej. Cajita Nu" required className="bg-zinc-900 border-zinc-800 rounded-xl h-12" />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label className="text-zinc-300">Tipo</Label>
+                  <Label className="text-zinc-300">Tipo de Cuenta</Label>
                   <Select value={accountForm.type} onValueChange={v => setAccountForm({...accountForm, type: v})}>
                     <SelectTrigger className="bg-zinc-900 border-zinc-800 rounded-xl h-12"><SelectValue /></SelectTrigger>
                     <SelectContent className="bg-zinc-900 border-zinc-800">
                       <SelectItem value="debit">Cuenta de Débito / Banco</SelectItem>
                       <SelectItem value="credit">Tarjeta de Crédito</SelectItem>
                       <SelectItem value="cash">Dinero en Efectivo</SelectItem>
+                      <SelectItem value="investment" className="text-amber-400 font-medium">Cajita / Inversión</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
+                {/* CAMPO DINÁMICO: Solo se muestra si es cuenta de inversión */}
+                <AnimatePresence>
+                  // 2. Dentro de tu formulario, abajo del tipo de cuenta, inyectas esto:
+                  {accountForm.type === 'investment' && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-4 overflow-hidden">
+                      
+                      {/* Selector de Institución */}
+                      <div className="space-y-2">
+                        <Label className="text-zinc-300">Institución Financiera</Label>
+                        <Select onValueChange={(value) => {
+                          if (value !== 'custom') {
+                            setAccountForm({ ...accountForm, yieldRate: INVESTMENT_PRESETS[value].rate.toString() });
+                          }
+                        }}>
+                          <SelectTrigger className="bg-zinc-900 border-zinc-800 rounded-xl h-12"><SelectValue placeholder="Selecciona una opción..." /></SelectTrigger>
+                          <SelectContent className="bg-zinc-900 border-zinc-800">
+                            <SelectItem value="nu_garantia">Nu Crédito en Garantía (6.75%)</SelectItem>
+                            <SelectItem value="nu_turbo">Nu Turbo (13.00%)</SelectItem>
+                            <SelectItem value="uala">Ualá ABC (15.00%)</SelectItem>
+                            <SelectItem value="mercadopago">Mercado Pago (15.00%)</SelectItem>
+                            <SelectItem value="klar">Klar (14.00%)</SelectItem>
+                            <SelectItem value="custom">Otra cuenta con rendimiento (Manual)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Campo de Tasa (Se auto-rellena o se escribe manualmente) */}
+                      <div className="space-y-2">
+                        <Label className="text-amber-400/80">Tasa de Rendimiento Anual (APY %)</Label>
+                        <Input 
+                          type="number" 
+                          step="0.01" 
+                          value={accountForm.yieldRate} 
+                          onChange={e => setAccountForm({...accountForm, yieldRate: e.target.value})} 
+                          placeholder="Ej. 14.75" 
+                          className="bg-zinc-900 border-amber-500/30 focus-visible:ring-amber-500/50 rounded-xl h-12 text-amber-400 font-bold" 
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 <div className="space-y-2">
                   <Label className="text-zinc-300">Saldo Actual</Label>
                   <Input type="number" step="0.01" value={accountForm.balance} onChange={e => setAccountForm({...accountForm, balance: e.target.value})} placeholder="0.00" required className="bg-zinc-900 border-zinc-800 rounded-xl h-12 font-bold" />
-                  <p className="text-xs text-zinc-500">Puedes poner saldos negativos si es una tarjeta de crédito.</p>
                 </div>
 
-                <Button type="submit" disabled={submitting} className="w-full bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-bold rounded-xl h-12 mt-4">
+                <Button type="submit" disabled={submitting} className={`w-full font-bold rounded-xl h-12 mt-4 text-zinc-950 transition-colors ${accountForm.type === 'investment' ? 'bg-amber-500 hover:bg-amber-600' : 'bg-emerald-500 hover:bg-emerald-600'}`}>
                   {submitting ? 'Guardando...' : 'Guardar Cuenta'}
                 </Button>
               </form>
@@ -333,7 +462,7 @@ const AccountsPage = () => {
           </div>
         )}
 
-        {/* MODAL DE TRANSFERENCIA */}
+        {/* MODAL DE TRANSFERENCIA (Sin Cambios) */}
         {isTransferModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/80 backdrop-blur-md">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-zinc-950 border border-cyan-500/30 rounded-3xl p-6 w-full max-w-md shadow-[0_0_40px_rgba(6,182,212,0.15)] relative">
